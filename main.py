@@ -1,8 +1,5 @@
 
 
-# budget app
-
-
 class BudgetApp:
 
     accountBalance = 13300000
