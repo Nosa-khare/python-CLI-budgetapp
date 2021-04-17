@@ -1,56 +1,56 @@
 import textwrap as tw
 
-wallet = 100000
-
 
 class Budget:
+    wallet = 100000  # mutable, can undergo changes on deposits and withdrawals
+
     categories = {
         "1": {
-            "name": "Food",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Food Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "2": {
-            "name": "Clothing",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Clothing Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "3": {
-            "name": "Gas & Transportation",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Gas & Transportation Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "4": {
-            "name": "Data & Airtime",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Data & Airtime Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "5": {
-            "name": "Groceries & Utilities",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Groceries & Utilities Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "6": {
-            "name": "Insurance",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Insurance Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "7": {
-            "name": "Emergencies",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Emergencies Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
         "8": {
-            "name": "Savings",
-            "balance": 0.00,
-            "limit": 100
+            "name": "Savings Budget",
+            "balance": 1000,
+            "warning": 100
         },
 
     }
@@ -61,9 +61,8 @@ class Budget:
 
         self.introduceCategory(category)
 
-    def introduceCategory(self,category):
-        print(f"\n{'*' * 8} {self.name} Budget {'*' * 8}")
-
+    def introduceCategory(self, category):
+        print(f"\n{'*' * 8} {self.name} {'*' * 8}")
         self.operation(category)
 
     def operation(self, category):
@@ -81,10 +80,11 @@ class Budget:
             self.deposit(category)
 
         elif budgetOperation == "2":
-            self.withdraw()
+            self.withdraw(category)
 
         elif budgetOperation == "3":
-            self.checkBalance()
+            print("Balance:", self.checkBalance(category))
+            self.operation(category)
 
         elif budgetOperation == "4":
             selectBudget()
@@ -92,35 +92,99 @@ class Budget:
         elif budgetOperation == "5":
             init()
 
+        elif " " in budgetOperation or budgetOperation == "":
+            print("Clear whitespaces and an enter option")
+            self.operation(category)
+
         else:
             print("Invalid option")
             init()
 
+    def fetchWalletBalance(self):
+        return Budget.wallet
+
+    def updateWallet(self, value):
+        Budget.wallet += value
+
+    def newBalance(self, budget_name, balance):
+        display = f"{budget_name} balance: ${balance}"
+        return display
+
     def deposit(self, category):
-        print(self.categories[category]['balance'])
-        depositAmount = input("How much would you like to deposit?\n---> $")
+
+        depositAmount = int(input("\nHow much would you like to deposit?\n---> $"))
 
         try:
-            if int(depositAmount) >= wallet:
-                self.categories[category]['balance'] += float(depositAmount)
-                print(tw.dedent(f"""
-                            ${depositAmount} deposited successfully!
-                            {self.name} budget balance: ${self.categories[category]['balance']}
-                            """))
+            if depositAmount <= self.fetchWalletBalance():
+                self.categories[category]['balance'] += depositAmount
+                updateValue = -depositAmount
+                self.updateWallet(updateValue)
+
+                print("\nSuccess!!\n"
+                      f"{self.newBalance(self.name, self.checkBalance(category))}\n"
+                      f"{self.newBalance('Wallet', self.fetchWalletBalance())}"
+                      )
                 self.operation(category)
             else:
-                print("Insufficient funds available in wallet")
+                print("\nFail!!\nInsufficient funds available in wallet")
                 self.operation(category)
 
         except ValueError:
-            print("Invalid amount entered")
+            print("\nFail!!\nInvalid amount entered")
             self.deposit(category)
 
-    def withdraw(self):
+    def withdraw(self, category):
         pass
 
-    def checkBalance(self):
-        pass
+        withdrawalType = input("\n1. Withdraw from budget balance into wallet\n"
+                               "2. Transfer funds into another budget category\n--->")
+
+        withdrawalAmount = int(input("\nHow much would you like to withdraw?\n---> "))
+
+        try:
+            if withdrawalAmount <= self.categories[category]["balance"]:  # check if account balance is sufficient to
+                # dispense withdrawal amount
+
+                if withdrawalType == "1":
+                    self.updateWallet(withdrawalAmount)
+                    self.categories[category]['balance'] -= withdrawalAmount
+
+                    print("\nsuccess!!\n"
+                          f"{self.newBalance('Wallet Balance', self.fetchWalletBalance())}\n"
+                          f"{self.newBalance(self.name, self.checkBalance(category))}"
+                          )
+                    self.operation(category)
+
+                elif withdrawalType == "2":
+                    print("\nWhat budget category would you like to transfer into?")
+
+                    for key, value in Budget.categories.items():
+                        print(f"{key}. {value['name']}")
+
+                    transferCategory = input("Select an option\n---> ")
+                    self.categories[transferCategory]['balance'] += withdrawalAmount
+                    self.categories[category]['balance'] -= withdrawalAmount
+
+                    print("\nsuccess!!\n"
+                          f"{self.newBalance(self.categories[transferCategory]['name'], self.checkBalance(transferCategory))}\n"
+                          f"{self.newBalance(self.name, self.checkBalance(category))}"
+                          )
+                    self.operation(category)
+
+                else:
+                    print("Fail!!\nInvalid option selected")
+                    self.withdraw(category)
+
+            else:
+                print("Fail!!\nInsufficient funds")
+
+        except ValueError:
+            print("Invalid input")
+            self.withdraw(category)
+
+    def checkBalance(self, category):
+        balance = f"${self.categories[category]['balance']}"
+        return balance
 
 
 def init():
@@ -159,15 +223,18 @@ def selectBudget():
     category = input("Select an option\n---> ")
 
     try:
-        if int(category) <= len(Budget.categories):
-            category = str(category)
 
+        if int(category) <= len(Budget.categories) and int(category) != 0:
+            category = str(category)
             Budget(category)
 
         else:
             print("Sorry category does not exist")
+            selectBudget()
+
     except ValueError:
         print("Invalid input! Enter a number")
+        selectBudget()
 
 
 def addToWallet():
